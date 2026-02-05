@@ -14,13 +14,13 @@ Safe Shopify theme development workflow with live theme protection.
 ### Via npx (no install)
 
 ```bash
-npx github:YOUR_USERNAME/shopify-theme-cli dev
+npx github:Daniel-Farnham/shopify-theme-cli dev
 ```
 
 ### Install globally
 
 ```bash
-npm install -g github:YOUR_USERNAME/shopify-theme-cli
+npm install -g github:Daniel-Farnham/shopify-theme-cli
 theme-cli dev
 ```
 
