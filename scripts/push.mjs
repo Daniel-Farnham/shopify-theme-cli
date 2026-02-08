@@ -4,7 +4,7 @@ import { select, confirm } from '@inquirer/prompts';
 import chalk from 'chalk';
 import ora from 'ora';
 import { execa } from 'execa';
-import { loadConfig, sortThemes } from './config.mjs';
+import { loadConfig, sortThemes, CONTENT_FILES } from './config.mjs';
 
 // ============================================================================
 // DISPLAY HELPERS
@@ -53,6 +53,23 @@ async function getThemes(store, password) {
     '--json'
   ]);
   return JSON.parse(stdout);
+}
+
+async function pullContentFromLive(store, password) {
+  const args = [
+    'theme', 'pull',
+    '--live',
+    '--store', store,
+    '--password', password,
+    '--nodelete'
+  ];
+
+  // Add each content file pattern
+  for (const pattern of CONTENT_FILES) {
+    args.push('--only', pattern);
+  }
+
+  await execa('shopify', args, { stdio: 'inherit' });
 }
 
 async function pushToTheme(store, password, themeId) {
@@ -170,7 +187,36 @@ async function main() {
     process.exit(0);
   }
 
-  // Step 7: Push to theme
+  // Step 7: Ask whether to pull content from live
+  console.log('');
+  const pullFromLive = await confirm({
+    message: chalk.cyan('Pull latest content from the live store?'),
+    default: true
+  });
+
+  if (pullFromLive) {
+    console.log('');
+    divider();
+    console.log(chalk.blue.bold('  SYNCING CONTENT FROM LIVE'));
+    divider();
+    console.log('');
+    info('Pulling: config/settings_data.json, locales/*, templates/*.json');
+    console.log('');
+
+    try {
+      await pullContentFromLive(store, password);
+      console.log('');
+      success('Content synced from live theme');
+    } catch (err) {
+      console.log('');
+      warning('Content sync had issues (may be partial)');
+      warning(err.message);
+    }
+  } else {
+    info('Skipping content sync from live store');
+  }
+
+  // Step 8: Push to theme
   console.log('');
   divider();
   console.log(chalk.blue.bold('  PUSHING TO THEME'));

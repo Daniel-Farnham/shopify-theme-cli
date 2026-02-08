@@ -184,23 +184,33 @@ async function main() {
     process.exit(0);
   }
 
-  // Step 7: Pull content from live
+  // Step 7: Ask whether to pull content from live
   console.log('');
-  divider();
-  console.log(chalk.blue.bold('  SYNCING CONTENT FROM LIVE'));
-  divider();
-  console.log('');
-  info('Pulling: config/settings_data.json, locales/*, templates/*.json');
-  console.log('');
+  const pullFromLive = await confirm({
+    message: chalk.cyan('Pull latest content from the live store?'),
+    default: true
+  });
 
-  try {
-    await pullContentFromLive(store, password);
+  if (pullFromLive) {
     console.log('');
-    success('Content synced from live theme');
-  } catch (err) {
+    divider();
+    console.log(chalk.blue.bold('  SYNCING CONTENT FROM LIVE'));
+    divider();
     console.log('');
-    warning('Content sync had issues (may be partial)');
-    warning(err.message);
+    info('Pulling: config/settings_data.json, locales/*, templates/*.json');
+    console.log('');
+
+    try {
+      await pullContentFromLive(store, password);
+      console.log('');
+      success('Content synced from live theme');
+    } catch (err) {
+      console.log('');
+      warning('Content sync had issues (may be partial)');
+      warning(err.message);
+    }
+  } else {
+    info('Skipping content sync from live store');
   }
 
   // Step 8: Start dev server
