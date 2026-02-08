@@ -55,14 +55,19 @@ async function getThemes(store, password) {
   return JSON.parse(stdout);
 }
 
-async function pullContentFromLive(store, password) {
+async function pullContent(store, password, { live = false, themeId = null } = {}) {
   const args = [
     'theme', 'pull',
-    '--live',
     '--store', store,
     '--password', password,
     '--nodelete'
   ];
+
+  if (live) {
+    args.push('--live');
+  } else if (themeId) {
+    args.push('--theme', themeId.toString());
+  }
 
   // Add each content file pattern
   for (const pattern of CONTENT_FILES) {
@@ -187,33 +192,44 @@ async function main() {
     process.exit(0);
   }
 
-  // Step 7: Ask whether to pull content from live
+  // Step 7: Ask how to handle content sync
   console.log('');
-  const pullFromLive = await confirm({
-    message: chalk.cyan('Pull latest content from the live store?'),
-    default: true
+  const pullOption = await select({
+    message: chalk.cyan('How would you like to sync content?'),
+    choices: [
+      { name: `Pull from live theme ${chalk.gray(`(${liveTheme.name})`)}`, value: 'live' },
+      { name: `Pull from selected theme ${chalk.gray(`(${selectedTheme.name})`)}`, value: 'theme' },
+      { name: 'Skip pull (use local content)', value: 'skip' }
+    ]
   });
 
-  if (pullFromLive) {
+  if (pullOption !== 'skip') {
+    const isLive = pullOption === 'live';
+    const sourceName = isLive ? liveTheme.name : selectedTheme.name;
+
     console.log('');
     divider();
-    console.log(chalk.blue.bold('  SYNCING CONTENT FROM LIVE'));
+    console.log(chalk.blue.bold(`  SYNCING CONTENT FROM ${isLive ? 'LIVE' : 'SELECTED'} THEME`));
     divider();
     console.log('');
+    info(`Source: ${sourceName}`);
     info('Pulling: config/settings_data.json, locales/*, templates/*.json');
     console.log('');
 
     try {
-      await pullContentFromLive(store, password);
+      await pullContent(store, password, {
+        live: isLive,
+        themeId: isLive ? null : selectedTheme.id
+      });
       console.log('');
-      success('Content synced from live theme');
+      success(`Content synced from ${sourceName}`);
     } catch (err) {
       console.log('');
       warning('Content sync had issues (may be partial)');
       warning(err.message);
     }
   } else {
-    info('Skipping content sync from live store');
+    info('Skipping content sync — using local content');
   }
 
   // Step 8: Push to theme
