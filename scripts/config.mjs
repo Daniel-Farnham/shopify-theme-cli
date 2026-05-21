@@ -8,7 +8,10 @@ export const CONTENT_FILES = [
   'config/settings_data.json',
   'locales/*',
   'templates/*.json',
-  'templates/**/*.json'
+  'templates/**/*.json',
+  // Section groups (e.g. header-group.json, footer-group.json) — merchant
+  // content edited via the theme editor, not theme code.
+  'sections/*.json'
 ];
 
 // Files to explicitly exclude from sync

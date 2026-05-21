@@ -213,7 +213,7 @@ async function main() {
     divider();
     console.log('');
     info(`Source: ${sourceName}`);
-    info('Pulling: config/settings_data.json, locales/*, templates/*.json');
+    info('Pulling: config/settings_data.json, locales/*, templates/**/*.json, sections/*.json');
     console.log('');
 
     try {
