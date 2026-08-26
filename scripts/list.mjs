@@ -3,7 +3,7 @@
 import chalk from 'chalk';
 import ora from 'ora';
 import { execa } from 'execa';
-import { loadConfig, sortThemes } from './config.mjs';
+import { loadConfig, sortThemes, authArgs, captureOptions } from './config.mjs';
 
 // ============================================================================
 // DISPLAY HELPERS
@@ -34,6 +34,11 @@ async function main() {
 
   banner(store);
 
+  if (!password) {
+    console.log(chalk.gray('  Auth: Shopify CLI login session (no password in config)'));
+    console.log('');
+  }
+
   const spinner = ora({
     text: 'Fetching themes...',
     prefixText: '  '
@@ -44,9 +49,9 @@ async function main() {
     const { stdout } = await execa('shopify', [
       'theme', 'list',
       '--store', store,
-      '--password', password,
+      ...authArgs(password),
       '--json'
-    ]);
+    ], captureOptions(password));
     themes = JSON.parse(stdout);
     spinner.succeed('Themes loaded');
   } catch (err) {

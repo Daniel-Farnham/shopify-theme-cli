@@ -4,7 +4,7 @@ import { select, confirm } from '@inquirer/prompts';
 import chalk from 'chalk';
 import ora from 'ora';
 import { execa } from 'execa';
-import { loadConfig, sortThemes, CONTENT_FILES } from './config.mjs';
+import { loadConfig, sortThemes, authArgs, captureOptions, CONTENT_FILES } from './config.mjs';
 
 // ============================================================================
 // DISPLAY HELPERS
@@ -49,9 +49,9 @@ async function getThemes(store, password) {
   const { stdout } = await execa('shopify', [
     'theme', 'list',
     '--store', store,
-    '--password', password,
+    ...authArgs(password),
     '--json'
-  ]);
+  ], captureOptions(password));
   return JSON.parse(stdout);
 }
 
@@ -59,7 +59,7 @@ async function pullContent(store, password, { live = false, themeId = null } = {
   const args = [
     'theme', 'pull',
     '--store', store,
-    '--password', password,
+    ...authArgs(password),
     '--nodelete'
   ];
 
@@ -81,7 +81,7 @@ async function pushToTheme(store, password, themeId) {
   await execa('shopify', [
     'theme', 'push',
     '--store', store,
-    '--password', password,
+    ...authArgs(password),
     '--theme', themeId.toString()
   ], { stdio: 'inherit' });
 }
@@ -96,6 +96,11 @@ async function main() {
   const { store, password } = config;
 
   banner(store);
+
+  if (!password) {
+    console.log(chalk.gray('  Auth: Shopify CLI login session (no password in config)'));
+    console.log('');
+  }
 
   // Step 1: Fetch all themes
   const spinner = ora({

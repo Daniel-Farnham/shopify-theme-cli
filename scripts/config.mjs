@@ -69,7 +69,7 @@ export function loadConfig() {
     console.log('');
     console.log(chalk.cyan('  [environments.env1]'));
     console.log(chalk.cyan('  store = "your-store.myshopify.com"'));
-    console.log(chalk.cyan('  password = "shptka_xxxxx"'));
+    console.log(chalk.cyan('  password = "shptka_xxxxx"  # optional — omit to use browser login'));
     console.log('');
     process.exit(1);
   }
@@ -86,16 +86,34 @@ export function loadConfig() {
 
   const env = config[envName];
 
-  if (!env.store || !env.password) {
-    console.log(chalk.red('  ✗ Missing store or password in shopify.theme.toml'));
+  if (!env.store) {
+    console.log(chalk.red('  ✗ Missing store in shopify.theme.toml'));
     process.exit(1);
   }
 
   return {
     store: env.store,
-    password: env.password,
+    password: env.password || null,
     environment: envName
   };
+}
+
+/**
+ * Auth flags for `shopify theme` commands.
+ * With no password configured, the Shopify CLI falls back to browser
+ * session auth (requires staff/collaborator access on the store).
+ */
+export function authArgs(password) {
+  return password ? ['--password', password] : [];
+}
+
+/**
+ * Execa options for `shopify` calls whose stdout is captured (--json).
+ * Session auth prompts for browser login on stderr/stdin — keep those
+ * attached so the prompt is visible and answerable.
+ */
+export function captureOptions(password) {
+  return password ? {} : { stdio: ['inherit', 'pipe', 'inherit'] };
 }
 
 /**

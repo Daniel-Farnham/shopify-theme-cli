@@ -31,8 +31,10 @@ theme-cli dev
 ```toml
 [environments.env1]
 store = "your-store.myshopify.com"
-password = "shptka_xxxxx"
+password = "shptka_xxxxx"  # optional — omit to use browser login
 ```
+
+`password` is a [Theme Access](https://shopify.dev/docs/storefronts/themes/tools/theme-access) password. If omitted, the Shopify CLI falls back to browser session auth — your Shopify account must be staff or a collaborator on the store. Run `shopify auth logout` first to switch accounts.
 
 2. Run commands:
 
@@ -77,7 +79,7 @@ When running `dev`, these files are synced from live:
 
 - Node.js >= 18
 - Shopify CLI installed (`npm install -g @shopify/cli`)
-- Theme Access password from Shopify Admin
+- Theme Access password from Shopify Admin, or staff/collaborator access for browser login
 
 ## License
 
