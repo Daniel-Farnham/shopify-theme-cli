@@ -92,7 +92,7 @@ async function pushToTheme(store, password, themeId) {
 
 async function main() {
   // Load config from shopify.theme.toml
-  const config = loadConfig();
+  const config = await loadConfig();
   const { store, password } = config;
 
   banner(store);

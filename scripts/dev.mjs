@@ -4,7 +4,8 @@ import { select, confirm } from '@inquirer/prompts';
 import chalk from 'chalk';
 import ora from 'ora';
 import { execa } from 'execa';
-import { loadConfig, sortThemes, authArgs, captureOptions, CONTENT_FILES } from './config.mjs';
+import { loadConfig, sortThemes, authArgs, CONTENT_FILES } from './config.mjs';
+import { getThemes, startLoggedDevServer, beginSession, DEV_LOG_FILE } from './shopify.mjs';
 
 // ============================================================================
 // DISPLAY HELPERS
@@ -45,16 +46,6 @@ function info(msg) {
 // SHOPIFY API HELPERS
 // ============================================================================
 
-async function getThemes(store, password) {
-  const { stdout } = await execa('shopify', [
-    'theme', 'list',
-    '--store', store,
-    ...authArgs(password),
-    '--json'
-  ], captureOptions(password));
-  return JSON.parse(stdout);
-}
-
 async function pullContent(store, password, { live = false, themeId = null } = {}) {
   const args = [
     'theme', 'pull',
@@ -77,25 +68,20 @@ async function pullContent(store, password, { live = false, themeId = null } = {
   await execa('shopify', args, { stdio: 'inherit' });
 }
 
-async function startDevServer(store, password, themeId) {
-  await execa('shopify', [
-    'theme', 'dev',
-    '--store', store,
-    ...authArgs(password),
-    '--theme', themeId.toString()
-  ], { stdio: 'inherit' });
-}
-
 // ============================================================================
 // MAIN WORKFLOW
 // ============================================================================
 
-async function main() {
+export async function main() {
   // Load config from shopify.theme.toml
-  const config = loadConfig();
+  const config = await loadConfig();
   const { store, password } = config;
 
   banner(store);
+
+  if (!(await beginSession(config))) {
+    warning('Admin API auth failed — Claude won\'t be able to query this store');
+  }
 
   if (!password) {
     console.log(chalk.gray('  Auth: Shopify CLI login session (no password in config)'));
@@ -241,11 +227,12 @@ async function main() {
   divider();
   console.log('');
   info(`Theme: ${selectedTheme.name} (${selectedTheme.id})`);
+  info(`Output mirrored to ${DEV_LOG_FILE}`);
   info('Press Ctrl+C to stop');
   console.log('');
 
   try {
-    await startDevServer(store, password, selectedTheme.id);
+    await startLoggedDevServer(store, password, selectedTheme);
   } catch (err) {
     if (err.signal !== 'SIGINT') {
       error('Dev server error: ' + err.message);
@@ -257,8 +244,3 @@ async function main() {
   info('Dev server stopped');
 }
 
-// Run
-main().catch(err => {
-  console.log(chalk.red('  ✗ ') + 'Unexpected error: ' + err.message);
-  process.exit(1);
-});

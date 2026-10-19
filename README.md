@@ -39,6 +39,7 @@ password = "shptka_xxxxx"  # optional — omit to use browser login
 2. Run commands:
 
 ```bash
+theme-cli new    # Optionally duplicate a theme, then start dev on it
 theme-cli dev    # Start dev server (syncs content from live first)
 theme-cli push   # Push to a dev theme
 theme-cli list   # List all themes
@@ -49,10 +50,19 @@ theme-cli help   # Show help
 
 | Command | Description |
 |---------|-------------|
+| `new` | Start a new theme? Yes → pick a source theme → name it → duplicate → dev on it. No → `dev` flow |
 | `dev` | Select dev theme → sync content from live → start dev server |
 | `push` | Select dev theme → push local files (with confirmation) |
 | `list` | List all themes (live first, then newest to oldest) |
 | `help` | Show help message |
+
+## Dev sessions
+
+- **Environments** — if `shopify.theme.toml` has several environments, every command asks which one first.
+- **Free port** — dev servers start on the first free port from 9292, so several can run at once.
+- **`.theme-dev.log`** — dev server output is mirrored here (git-excluded) so other tools can read it.
+- **`.shopify-session.json`** — store, environment, dev theme and preview URL for the current run (git-excluded).
+- **Admin API auth** — `dev`/`new` check `shopify store execute` works for the store and run `shopify store auth` if not (requires Shopify CLI 4.x). Scopes live in `ADMIN_SCOPES` in `scripts/shopify.mjs`.
 
 ## Safety Features
 

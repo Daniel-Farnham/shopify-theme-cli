@@ -13,6 +13,7 @@ function showHelp() {
   console.log('');
   console.log(chalk.gray('  Commands:'));
   console.log(`    ${chalk.cyan('dev')}     Start development server (syncs content from live first)`);
+  console.log(`    ${chalk.cyan('new')}     Optionally duplicate live as a new theme, then dev on it`);
   console.log(`    ${chalk.cyan('push')}    Push theme to store (with safety checks)`);
   console.log(`    ${chalk.cyan('list')}    List all themes in store`);
   console.log(`    ${chalk.cyan('help')}    Show this help message`);
@@ -31,7 +32,10 @@ function showHelp() {
 async function run() {
   switch (command) {
     case 'dev':
-      await import('./dev.mjs');
+      await (await import('./dev.mjs')).main();
+      break;
+    case 'new':
+      await (await import('./new.mjs')).main();
       break;
     case 'push':
       await import('./push.mjs');
@@ -54,6 +58,7 @@ async function run() {
 }
 
 run().catch(err => {
+  if (err.name === 'ExitPromptError') process.exit(0);
   console.log(chalk.red('  Error: ') + err.message);
   process.exit(1);
 });

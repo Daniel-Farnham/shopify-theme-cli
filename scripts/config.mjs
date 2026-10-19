@@ -2,6 +2,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import chalk from 'chalk';
+import { select } from '@inquirer/prompts';
 
 // Files to sync from live theme (content only, not schema)
 export const CONTENT_FILES = [
@@ -53,11 +54,17 @@ function parseToml(content) {
   return config;
 }
 
+// Chosen once per run, so chained commands (new → dev) don't ask twice
+let cachedConfig = null;
+
 /**
  * Load store configuration from shopify.theme.toml
- * Looks in current working directory
+ * Looks in current working directory. Asks which environment to use
+ * when the file defines more than one.
  */
-export function loadConfig() {
+export async function loadConfig() {
+  if (cachedConfig) return cachedConfig;
+
   const tomlPath = join(process.cwd(), 'shopify.theme.toml');
 
   if (!existsSync(tomlPath)) {
@@ -77,12 +84,19 @@ export function loadConfig() {
   const content = readFileSync(tomlPath, 'utf-8');
   const config = parseToml(content);
 
-  // Get first environment (usually env1)
-  const envName = Object.keys(config)[0];
-  if (!envName) {
+  const envNames = Object.keys(config);
+  if (envNames.length === 0) {
     console.log(chalk.red('  ✗ No environment found in shopify.theme.toml'));
     process.exit(1);
   }
+
+  const envName = envNames.length === 1 ? envNames[0] : await select({
+    message: chalk.cyan('Which environment?'),
+    choices: envNames.map(name => ({
+      name: `${name} ${chalk.gray(`(${config[name].store || 'no store'})`)}`,
+      value: name
+    }))
+  });
 
   const env = config[envName];
 
@@ -91,11 +105,12 @@ export function loadConfig() {
     process.exit(1);
   }
 
-  return {
+  cachedConfig = {
     store: env.store,
     password: env.password || null,
     environment: envName
   };
+  return cachedConfig;
 }
 
 /**

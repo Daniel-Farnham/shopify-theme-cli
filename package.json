@@ -1,6 +1,6 @@
 {
   "name": "shopify-theme-cli",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Safe Shopify theme development workflow with live theme protection",
   "type": "module",
   "bin": {
